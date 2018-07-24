@@ -18,19 +18,22 @@ class NegociacoesView {
                     </thead>
 
                     <tbody>
-                        ${modelo.negociacoes.map(item=>{
-                            return `
+                        ${modelo.negociacoes.map(item=>`
                                 <tr>
-                                <td>${DataHelper.dataParaTexto(item.data)}</td>
-                                <td>${item.quantidade}</td>
-                                <td>${item.valor}</td>
-                                <td>${item.volume}</td>
+                                    <td>${DataHelper.dataParaTexto(item.data)}</td>
+                                    <td>${item.quantidade}</td>
+                                    <td>${item.valor}</td>
+                                    <td>${item.volume}</td>
                                 </tr>
-                            `
-                        }).join('')}
+                        `).join('')}
                     </tbody>
-
                     <tfoot>
+                        <td colspan='3'></td>
+                        <td>
+                            ${modelo.negociacoes.reduce((total,n)=>
+                                total+n.volume
+                            ,0.0)}
+                        </td>
                     </tfoot>
                 </table>
         `;
@@ -40,5 +43,7 @@ class NegociacoesView {
         //converte a string para elemento do DOM
         this._elemento.innerHTML = this._template(modelo);
     }
+
+   
 
 }

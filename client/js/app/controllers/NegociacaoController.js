@@ -17,8 +17,6 @@ class NegociacaoController {
             
         this._listaNegociacoes.adiciona(this._criaNegociacao(data));
 
-        console.log(this._listaNegociacoes)
-
         this._negociacoesView.update(this._listaNegociacoes);
 
         this._limpaFormulario();
