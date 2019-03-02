@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Aprendendo IndexdDB</title>
+  </head>
+  <body>
+    <script src="js/app/models/Negociacao.js"></script>
+    <script>
+      var conection;
+      var NEGOCIACOES_STORE = 'negociacoes';
+      var openRequest = window.indexedDB.open('aluraframe', 5);
+
+      openRequest.onupgradeneeded = e => {
+        console.log('cria ou altera um banco já existente');
+        let minhaConection = e.target.result;
+
+        if (minhaConection.objectStoreNames.contains(NEGOCIACOES_STORE))
+          minhaConection.deleteObjectStore(NEGOCIACOES_STORE);
+
+        minhaConection.createObjectStore(NEGOCIACOES_STORE, {
+          autoIncrement: true
+        });
+      };
+
+      openRequest.onsuccess = e => {
+        console.log('conexão obtida com sucesso');
+        conection = e.target.result;
+      };
+
+      openRequest.onerror = e => {
+        console.log(e.target.error);
+      };
+
+      function adiciona() {
+        let transaction = conection.transaction(
+          [NEGOCIACOES_STORE],
+          'readwrite'
+        );
+        let store = transaction.objectStore(NEGOCIACOES_STORE);
+        console.log(store);
+        let negociacao = new Negociacao(new Date(), 1, 200);
+        console.log(negociacao);
+        let request = store.add(negociacao);
+        request.onsuccess = e => {
+          console.log('Negociacao incluída com sucesso!');
+        };
+
+        request.onerror = e => {
+          console.log('Não foi possível incluir a negociação');
+        };
+      }
+
+      function listarTodas() {
+        let transaction = conection.transaction(
+          [NEGOCIACOES_STORE],
+          'readwrite'
+        );
+        let store = transaction.objectStore(NEGOCIACOES_STORE);
+        let cursor = store.openCursor();
+        let negociacoes = [];
+        cursor.onsuccess = e => {
+          let atual = e.target.result;
+          if (atual) {
+            var dado = atual.value;
+            negociacoes.push(
+              new Negociacao(dado._data, dado._quantidade, dado._valor)
+            );
+            atual.continue();
+          } else {
+            console.log(negociacoes);
+          }
+        };
+        cursor.onerror = e => {
+          console.log(e.target.error.name);
+        };
+      }
+    </script>
+  </body>
+</html>
