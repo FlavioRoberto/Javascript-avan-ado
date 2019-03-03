@@ -1,8 +1,9 @@
 var ConnectionFactory = (function() {
-  var stores = ['negociacoes'];
-  var version = 4;
-  var dbName = 'aluraFrame';
+  const stores = ['negociacoes'];
+  const version = 4;
+  const dbName = 'aluraFrame';
   var connection = null;
+  var close = null;
 
   return class ConnectionFactory {
     constructor() {
@@ -18,7 +19,13 @@ var ConnectionFactory = (function() {
         };
 
         openRequest.onsuccess = e => {
-          if (!connection) connection = e.target.result;
+          if (!connection) {
+            connection = e.target.result;
+            close = connection.close.bind(connection);
+            connection.close = function() {
+              throw new Error('Não é possível fechar diretamente a conexão!');
+            };
+          }
           resolve(connection);
         };
 
@@ -35,6 +42,13 @@ var ConnectionFactory = (function() {
           connection.deleteObjectStore(store);
         connection.createObjectStore(store, { autoIncrement: true });
       });
+    }
+
+    static closeConnection() {
+      if (connection) {
+        close();
+        connection = null;
+      }
     }
   };
 })();
