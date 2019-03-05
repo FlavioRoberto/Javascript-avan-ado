@@ -18,6 +18,14 @@ class NegociacaoController {
       new MensagemView($('#MensagemView')),
       'texto'
     );
+
+    ConnectionFactory.getConection().then(con => {
+      new NegociacaoDao(con).listarTodos().then(negociacoes => {
+        negociacoes.forEach(negociacao => {
+          this._listaNegociacoes.adiciona(negociacao);
+        });
+      });
+    });
   }
 
   adiciona(event) {
