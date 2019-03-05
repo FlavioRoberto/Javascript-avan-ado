@@ -20,11 +20,17 @@ class NegociacaoController {
     );
 
     ConnectionFactory.getConection().then(con => {
-      new NegociacaoDao(con).listarTodos().then(negociacoes => {
-        negociacoes.forEach(negociacao => {
-          this._listaNegociacoes.adiciona(negociacao);
+      new NegociacaoDao(con)
+        .listarTodos()
+        .then(negociacoes => {
+          negociacoes.forEach(negociacao => {
+            this._listaNegociacoes.adiciona(negociacao);
+          });
+        })
+        .catch(erro => {
+          console.log(erro);
+          this._mensagem.texto = 'Não foi possível listar as negociações.';
         });
-      });
     });
   }
 
@@ -43,8 +49,14 @@ class NegociacaoController {
   }
 
   esvazia() {
-    this._listaNegociacoes.esvazia();
-    this._mensagem.texto = 'Lista de negociações apagadas';
+    ConnectionFactory.getConection()
+      .then(con => new NegociacaoDao(con))
+      .then(dao => dao.apagaTodos())
+      .then(() => {
+        this._listaNegociacoes.esvazia();
+        this._mensagem.texto = 'Lista de negociações apagadas';
+      })
+      .catch(erro => this._mensagem.texto.adiciona(erro));
   }
 
   _criaNegociacao() {
