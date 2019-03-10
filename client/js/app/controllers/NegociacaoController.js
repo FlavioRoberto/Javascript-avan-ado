@@ -4,8 +4,6 @@ class NegociacaoController {
     this._inputQuantidade = $('#quantidade');
     this._inputValor = $('#valor');
     this._inputData = $('#data');
-    let self = this;
-
     this._listaNegociacoes = new Bind(
       new ListaNegociacoes(),
       new NegociacoesView($('#negociacoesView')),
@@ -19,6 +17,10 @@ class NegociacaoController {
       'texto'
     );
 
+    this._init($);
+  }
+
+  _init($) {
     ConnectionFactory.getConection().then(con => {
       new NegociacaoDao(con)
         .listarTodos()
@@ -32,6 +34,37 @@ class NegociacaoController {
           this._mensagem.texto = 'Não foi possível listar as negociações.';
         });
     });
+
+    setInterval(() => {
+      this.importaNegociacoes();
+    }, 3000);
+  }
+
+  _obterNovasNegociacoes() {
+    let service = new NegociacaoService();
+    return new Promise((resolve, reject) => {
+      Promise.all([
+        service.obterNegociacoesDaSemana(),
+        service.obterNegociacoesDaSemanaAnterior(),
+        service.obterNegociacoesDaSemanaRetrasada()
+      ])
+        .then(totalNegociacoes =>
+          resolve(
+            totalNegociacoes.reduce(
+              (arrayAgrupado, array) => arrayAgrupado.concat(array),
+              []
+            )
+          )
+        )
+        .catch(erro => reject(erro));
+    });
+  }
+
+  _existeNegociacao(negociacao) {
+    return this._listaNegociacoes.negociacoes.some(
+      negociacaoExistente =>
+        JSON.stringify(negociacaoExistente) == JSON.stringify(negociacao)
+    );
   }
 
   adiciona(event) {
@@ -69,18 +102,15 @@ class NegociacaoController {
   }
 
   importaNegociacoes() {
-    let service = new NegociacaoService();
-
-    Promise.all([
-      service.obterNegociacoesDaSemana(),
-      service.obterNegociacoesDaSemanaAnterior(),
-      service.obterNegociacoesDaSemanaRetrasada()
-    ])
-      .then(dados => {
+    this._obterNovasNegociacoes()
+      .then(negociacoes =>
+        negociacoes.filter(negociacao => !this._existeNegociacao(negociacao))
+      )
+      .then(negociacoes => {
         this._mensagem.texto = 'Negociações Importadas Com Sucesso!';
-        dados
-          .reduce((arrayAgrupado, array) => arrayAgrupado.concat(array), [])
-          .forEach(negociacao => this._listaNegociacoes.adiciona(negociacao));
+        negociacoes.forEach(negociacao => {
+          this._listaNegociacoes.adiciona(negociacao);
+        });
       })
       .catch(error => {
         this._mensagem.texto = error;
